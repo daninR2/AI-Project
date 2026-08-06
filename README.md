@@ -65,3 +65,6 @@ checkpoints/        # saved vocab + best model weights
 - `report/lstm_predictions.csv` and `report/llm_predictions.csv` share the
   same `source`/`reference` columns (same test set, same order) — join them
   to build the required 10-example qualitative comparison table.
+
+  <img width="502" height="710" alt="image" src="https://github.com/user-attachments/assets/c20b4cac-464a-4b73-9091-d023205dcedd" />
+
