@@ -9,6 +9,7 @@ Prereqs:
 
     python -m src.llm_baseline
 """
+from jinja2 import defaults
 import time
 
 import ollama
@@ -18,6 +19,8 @@ from src import config
 from src.data import load_and_split
 
 from concurrent.futures import ThreadPoolExecutor
+from rouge_score import rouge_scorer
+import sacrebleu
 
 FEW_SHOT_EXAMPLES = [
     (
@@ -119,6 +122,45 @@ def run_baseline():
 
     df = pd.DataFrame(results)
     df.to_csv("report/llm_predictions.csv", index=False)
+
+    refs = df["reference"].tolist()
+
+    scorer = rouge_scorer.RougeScorer(
+        ["rouge1", "rouge2", "rougeL"],
+        use_stemmer=True
+    )
+
+    def score_outputs(name, hyps):
+        bleu = sacrebleu.corpus_bleu(hyps, [refs])
+
+        rouge_scores = [
+            scorer.score(r, h)
+            for r, h in zip(refs, hyps)
+        ]
+
+        avg_rouge = {
+            k: sum(s[k].fmeasure for s in rouge_scores) / len(rouge_scores)
+            for k in ["rouge1", "rouge2", "rougeL"]
+        }
+
+        print(f"\n{name}")
+        print(f"BLEU: {bleu.score:.2f}")
+        print(
+            f"ROUGE-1/2/L (F1): "
+            f"{avg_rouge['rouge1']:.4f} / "
+            f"{avg_rouge['rouge2']:.4f} / "
+            f"{avg_rouge['rougeL']:.4f}"
+        )
+
+    score_outputs(
+        "LLM ZERO-SHOT",
+        df["llm_zero_shot"].tolist()
+    )
+
+    score_outputs(
+        "LLM FEW-SHOT",
+        df["llm_few_shot"].tolist()
+    )
 
     print(f"Ran {len(test_ex)} examples in {elapsed / 60:.1f} min "
           f"({elapsed / max(len(test_ex), 1):.2f} sec/example)")
