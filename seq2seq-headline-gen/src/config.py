@@ -41,4 +41,4 @@ VOCAB_PATH = "checkpoints/vocab.json"
 
 # ---- LLM baseline ----
 OLLAMA_MODEL = "llama3.1:8b-instruct-q4_K_M"   # or "mistral:7b-instruct"
-LLM_TEST_SUBSET_SIZE = None   # set an int to subsample test set for cheaper LLM runs; None = full test set
+LLM_TEST_SUBSET_SIZE = 5   # set an int to subsample test set for cheaper LLM runs; None = full test set

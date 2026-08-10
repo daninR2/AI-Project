@@ -18,9 +18,18 @@ from src import config
 from src.data import load_and_split
 
 FEW_SHOT_EXAMPLES = [
-    # Fill these in with 2-3 real (article_snippet, headline) pairs from your TRAIN split
-    # so you aren't leaking test examples into the prompt.
-    # ("Article snippet...", "Example Headline Here"),
+    (
+        "comedian sunil grover has confirmed that he will be featuring in actor salman khan starrer 'bharat'. replying to the film's director ali abbas zafar's tweet confirming his casting in the film, grover said, thank you sir for giving me the visa. i'm so proud of being part of this project. he will reportedly play salman's friend in the film.",
+        "proud of being part of the movie 'bharat' sunil grover"
+    ),
+    (
+        "the sri lankan parliament has voted to block the salaries and travel expenses of ministers with an aim to exert pressure on prime minister mahinda rajapaksa. rajapaksa has refused to step down despite losing two no-confidence votes. former pm ranil wickremesinghe who was sacked by president maithripala sirisena commands a majority in parliament.",
+        "sri lanka parliament blocks ministers' salaries to pressure pm"
+    ),
+    (
+        "the kerala chief minister's distress relief fund cmdrf has received a total donation of over 1,027 crore as of august 31 to help those affected in the flood-hit state. while nearly 146 crore has been received through electronic payments, 835.86 crore has been received via cash, cheques and rtgs. meanwhile, donations via mediums like upi accounted for 46 crore.",
+        "1,000 crore received till date as donation for kerala"
+    ),
 ]
 
 PROMPT_ZERO_SHOT = """Write a short, single-line news headline for the following article. \
@@ -48,8 +57,20 @@ def build_few_shot_prompt(article: str) -> str:
 
 
 def query_llm(prompt: str) -> str:
-    response = ollama.generate(model=config.OLLAMA_MODEL, prompt=prompt)
-    return response["response"].strip().split("\n")[0]
+    response = ollama.generate(
+        model=config.OLLAMA_MODEL,
+        prompt=prompt,
+        options={
+            "temperature": 0.0
+        }
+    )
+
+    text = response["response"].strip().split("\n")[0]
+
+    if text.lower().startswith("headline:"):
+        text = text[len("headline:"):].strip()
+
+    return text
 
 
 def run_baseline():
