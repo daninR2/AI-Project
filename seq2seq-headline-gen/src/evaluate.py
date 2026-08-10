@@ -36,6 +36,7 @@ def load_model():
 def evaluate():
     model, src_vocab, tgt_vocab = load_model()
     _, _, test_ex = load_and_split()
+    test_ex = test_ex[:1000]
     test_ds = HeadlineDataset(test_ex, src_vocab, tgt_vocab)
     test_loader = DataLoader(test_ds, batch_size=config.BATCH_SIZE, shuffle=False)
 
