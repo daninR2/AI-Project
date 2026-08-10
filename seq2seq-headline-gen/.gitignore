@@ -1,0 +1,33 @@
+
+# Virtual environment
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Generated model files
+checkpoints/
+report/
+
+# Dataset
+data/*.csv
+
+# macOS
+.DS_Store
+
+# Virtual environment
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Generated model files
+checkpoints/
+report/
+
+# Dataset
+data/*Store

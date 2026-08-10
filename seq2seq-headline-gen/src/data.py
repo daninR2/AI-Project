@@ -22,7 +22,7 @@ SPECIAL_TOKENS = [PAD, SOS, EOS, UNK]
 
 
 def clean_text(text: str) -> str:
-    text = str(text).lower().strip()
+    text = text.lower().strip()
     text = re.sub(r"http\S+|www\.\S+", " ", text)
     text = re.sub(r"[^a-z0-9.,!?'\- ]", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
@@ -91,8 +91,8 @@ class HeadlineDataset(Dataset):
     def __len__(self):
         return len(self.examples)
 
-    def __getitem__(self, idx):
-        ex = self.examples[idx]
+    def __getitem__(self, index):
+        ex = self.examples[index]
         src_ids = self.src_vocab.encode(tokenize(ex.src_text), config.MAX_SRC_LEN)
         tgt_ids = self.tgt_vocab.encode(tokenize(ex.tgt_text), config.MAX_TGT_LEN, add_sos_eos=True)
         return {
@@ -110,9 +110,12 @@ def load_and_split(path: str = config.RAW_DATA_PATH, article_col="text", headlin
     """
     df = pd.read_csv(path, encoding="latin-1")
     df = df[[article_col, headline_col]].dropna()
+
     df[article_col] = df[article_col].apply(clean_text)
     df[headline_col] = df[headline_col].apply(clean_text)
+
     df = df[(df[article_col].str.len() > 0) & (df[headline_col].str.len() > 0)]
+    df = df.drop_duplicates(subset=[article_col, headline_col]).reset_index(drop=True)
 
     train_df, temp_df = train_test_split(df, test_size=(1 - config.TRAIN_SPLIT), random_state=config.SEED)
     rel_val = config.VAL_SPLIT / (config.VAL_SPLIT + config.TEST_SPLIT)

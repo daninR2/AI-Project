@@ -33,7 +33,7 @@ class Encoder(nn.Module):
             embedded, src_lengths.cpu(), batch_first=True, enforce_sorted=False
         )
         packed_out, (h, c) = self.lstm(packed)
-        outputs, _ = nn.utils.rnn.pad_packed_sequence(packed_out, batch_first=True)
+        outputs, _ = nn.utils.rnn.pad_packed_sequence(packed_out, batch_first=True, total_length=src.size(1))
         # outputs: (B, T, hidden*dirs) -- used as attention memory
 
         # combine last layer's forward/backward final states -> decoder init state
@@ -108,8 +108,10 @@ class Seq2Seq(nn.Module):
         for t in range(target_len):
             logits, hidden, cell, _ = self.decoder.forward_step(input_tok, hidden, cell, enc_outputs, src_mask)
             outputs[:, t] = logits
-            use_tf = tgt is not None and random.random() < teacher_forcing_ratio
-            input_tok = tgt[:, t] if use_tf else logits.argmax(dim=-1)
+            if tgt is not None and random.random() < teacher_forcing_ratio:
+                input_tok = tgt[:, t]
+            else:
+                input_tok = logits.argmax(dim=-1)
         return outputs
 
     @torch.no_grad()

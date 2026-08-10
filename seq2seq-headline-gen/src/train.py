@@ -23,8 +23,11 @@ def run_epoch(model, loader, optimizer, criterion, pad_idx, teacher_forcing_rati
     model.train() if train else model.eval()
     total_loss = 0.0
     context = torch.enable_grad() if train else torch.no_grad()
+
+    start_time = time.time()
+
     with context:
-        for batch in loader:
+        for batch_idx, batch in enumerate(loader, start=1):
             src = batch["src"].to(config.DEVICE)
             tgt = batch["tgt"].to(config.DEVICE)
             src_lengths = get_lengths(src, pad_idx)
@@ -34,16 +37,44 @@ def run_epoch(model, loader, optimizer, criterion, pad_idx, teacher_forcing_rati
 
             if train:
                 optimizer.zero_grad()
-            logits = model(src, src_lengths, tgt=decoder_input, max_len=decoder_input.size(1),
-                            teacher_forcing_ratio=teacher_forcing_ratio if train else 0.0)
-            loss = criterion(logits.reshape(-1, logits.size(-1)), decoder_target.reshape(-1))
+
+            logits = model(
+                src,
+                src_lengths,
+                tgt=decoder_input,
+                max_len=decoder_input.size(1),
+                teacher_forcing_ratio=teacher_forcing_ratio if train else 0.0
+            )
+
+            loss = criterion(
+                logits.reshape(-1, logits.size(-1)),
+                decoder_target.reshape(-1)
+            )
 
             if train:
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(model.parameters(), config.CLIP_GRAD_NORM)
+                torch.nn.utils.clip_grad_norm_(
+                    model.parameters(),
+                    config.CLIP_GRAD_NORM
+                )
                 optimizer.step()
 
             total_loss += loss.item()
+
+            # Print progress every 25 batches
+            if batch_idx % 25 == 0:
+                elapsed = time.time() - start_time
+                seconds_per_batch = elapsed / batch_idx
+                estimated_total = seconds_per_batch * len(loader)
+                estimated_remaining = estimated_total - elapsed
+
+                print(
+                    f"Batch {batch_idx}/{len(loader)} | "
+                    f"loss={total_loss / batch_idx:.4f} | "
+                    f"elapsed={elapsed / 60:.1f} min | "
+                    f"ETA={estimated_remaining / 60:.1f} min"
+                )
+
     return total_loss / len(loader)
 
 
