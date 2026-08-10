@@ -60,10 +60,19 @@ def query_llm(prompt: str) -> str:
     response = ollama.generate(
         model=config.OLLAMA_MODEL,
         prompt=prompt,
+        keep_alive=-1,
         options={
-            "temperature": 0.0
+            "temperature": 0.0,
+            "num_predict": 24,
         }
     )
+
+    text = response["response"].strip().split("\n")[0]
+
+    if text.lower().startswith("headline:"):
+        text = text[len("headline:"):].strip()
+
+    return text
 
     text = response["response"].strip().split("\n")[0]
 
