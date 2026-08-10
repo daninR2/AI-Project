@@ -28,7 +28,7 @@ ATTENTION_TYPE = "bahdanau"   # additive attention
 # ---- Training ----
 BATCH_SIZE = 64
 LEARNING_RATE = 3e-4
-NUM_EPOCHS = 1    
+NUM_EPOCHS = 15
 CLIP_GRAD_NORM = 1.0
 TEACHER_FORCING_RATIO = 0.5
 EARLY_STOP_PATIENCE = 3
