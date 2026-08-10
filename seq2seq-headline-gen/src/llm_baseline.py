@@ -17,6 +17,8 @@ import pandas as pd
 from src import config
 from src.data import load_and_split
 
+from concurrent.futures import ThreadPoolExecutor
+
 FEW_SHOT_EXAMPLES = [
     (
         "comedian sunil grover has confirmed that he will be featuring in actor salman khan starrer 'bharat'. replying to the film's director ali abbas zafar's tweet confirming his casting in the film, grover said, thank you sir for giving me the visa. i'm so proud of being part of this project. he will reportedly play salman's friend in the film.",
@@ -89,15 +91,30 @@ def run_baseline():
 
     results = []
     start = time.time()
-    for ex in test_ex:
-        zero_shot_out = query_llm(PROMPT_ZERO_SHOT.format(article=ex.src_text))
-        few_shot_out = query_llm(build_few_shot_prompt(ex.src_text))
-        results.append({
+    def process_example(ex):
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            zero_future = executor.submit(
+                query_llm,
+                PROMPT_ZERO_SHOT.format(article=ex.src_text)
+            )
+            few_future = executor.submit(
+                query_llm,
+                build_few_shot_prompt(ex.src_text)
+            )
+
+            zero_shot_out = zero_future.result()
+            few_shot_out = few_future.result()
+
+        return {
             "source": ex.src_text,
             "reference": ex.tgt_text,
             "llm_zero_shot": zero_shot_out,
             "llm_few_shot": few_shot_out,
-        })
+        }
+
+
+    for ex in test_ex:
+        results.append(process_example(ex))
     elapsed = time.time() - start
 
     df = pd.DataFrame(results)
